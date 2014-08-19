@@ -669,6 +669,7 @@ class EntityManager
         foreach ($this->getRelationsFrom($node, $relation) as $r) {
             if (basename($r['end']) != $exception->getId()) {
                 $this->deleteRelationship($r);
+                $this->getRelationsFrom($node, $r, true);
             }
         }
     }
@@ -695,9 +696,10 @@ class EntityManager
     /**
      * @param Node $node
      * @param $relation
+     * @param $delete
      * @return array
      */
-    private function getRelationsFrom($node, $relation)
+    private function getRelationsFrom($node, $relation, $delete = false)
     {
         // Cache sequential calls for the same element
         static $loaded = null, $existing;
@@ -706,7 +708,17 @@ class EntityManager
             $existing = $command->execute();
             $loaded = $node;
         }
-
+        
+        if ($delete)
+        {
+           foreach($existing as $id => $r)
+           {
+               if ($r === $relation)
+                   unset($existing[$id]);
+           }
+           return;
+        }
+        
         return array_filter($existing, function ($entry) use ($relation) {
             return $entry['type'] == $relation;
         });
